@@ -750,8 +750,16 @@
     let selectedChip = 'Todos';
     let isErvasSubpage = false;
 
+    // Função auxiliar para validar permissão de acesso aos registros
+    function isPublicAccess(item) {
+      if (!item) return false;
+      const acesso = (item.Acesso_Publico || item.Acesso || item.Visibilidade || 'Sim').toString().toLowerCase().trim();
+      if (acesso.includes('restrit')) return false;
+      return true;
+    }
+
     // =================================================================
-    // 1. FORÇA O INÍCIO SEMPRE DESLOGADO (REQUISITADO)
+    // 1. FORÇA O INÍCIO SEMPRE DESLOGADO
     // =================================================================
     localStorage.removeItem('zeCiganoUser');
     sessionStorage.clear();
@@ -916,23 +924,23 @@
         const data = await res.json();
         if (data && data.length > 0) {
           const info = data[0];
-          const quemSomos = info.Quem_Somos || '';
-          const endereco = info.Endereço || info.Endereco || '';
+          const quemSomos = info.Quem_Somos || info.QuemSomos || info['Quem Somos'] || '';
+          const endereco = info.Endereco || info.Endereço || info['Endereço'] || info['Endereco'] || '';
           
           let enderecoHtml = quemSomos;
           if (endereco) {
             let mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
             enderecoHtml += `<br><br><a class="info-link" href="${mapsUrl}" target="_blank"><strong><i class="fa-solid fa-location-dot" style="color: var(--gold-primary);"></i> Endereço:</strong> ${endereco}</a>`;
           }
-          document.getElementById('txtQuemSomos').innerHTML = enderecoHtml;
+          document.getElementById('txtQuemSomos').innerHTML = enderecoHtml || 'Informações institucionais não encontradas.';
 
-          const telefone = info.Telefone_Whatsapp || info.Telefone || '';
-          const grupoWhatsapp = info.Grupo_Whatsapp || info['Grupo Whatsapp'] || info.Grupo_Zap || info.Grupo_WhatsApp || info['Grupo WhatsApp'] || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
+          const telefone = info.Telefone_Whatsapp || info.Telefone || info['Telefone'] || '';
+          const grupoWhatsapp = info.Grupo_Zap || info.Grupo_Whatsapp || info['Grupo Whatsapp'] || info.Grupo_WhatsApp || info['Grupo WhatsApp'] || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
           const instagram = info.Instagram || '';
           const facebook = info.Facebook || '';
-          const horario = info.Horario_Giras || info.Horario || '';
+          const horario = info.Horario_Giras || info.Horario || info['Horario Giras'] || '';
           const valor = info.Valor || '';
-          const pix = info.PIX || '';
+          const pix = info.PIX || info.Pix || '';
 
           let contatoHtml = '';
           
@@ -949,7 +957,7 @@
             contatoHtml += `<li><a class="info-link" href="${instaUrl}" target="_blank"><i class="fa-brands fa-instagram"></i> <span>${instagram}</span></a></li>`;
           }
           if (facebook) {
-            let fbUrl = facebook.startsWith('http') ? facebook : `https://facebook.com/${fbUrl}`;
+            let fbUrl = facebook.startsWith('http') ? facebook : `https://facebook.com/${facebook}`;
             contatoHtml += `<li><a class="info-link" href="${fbUrl}" target="_blank"><i class="fa-brands fa-facebook"></i> <span>${facebook}</span></a></li>`;
           }
           if (horario) {
@@ -966,6 +974,7 @@
         }
       } catch (e) {
         document.getElementById('txtQuemSomos').innerText = 'Erro ao carregar dados gerais.';
+        document.getElementById('txtContatosGeral').innerHTML = '<li>Erro ao carregar contatos.</li>';
       }
     }
 
@@ -1061,7 +1070,6 @@
           </div>
         `;
 
-        // Se o usuário for Dirigente, libera a opção Membros no menu
         if (loggedUser.perfil === 'Dirigente') {
           menuMembros.style.display = 'flex';
         } else {
@@ -1247,7 +1255,6 @@
       }
 
       if (id) {
-        // Atualiza membro existente no cache local
         const index = listaMembros.findIndex(item => String(item.ID_Filho || item.id || item.ID) === String(id));
         if (index !== -1) {
           listaMembros[index].Nome_Completo = nome;
@@ -1260,7 +1267,6 @@
           listaMembros[index].Status_Ativo = status;
         }
       } else {
-        // Cadastra novo membro no cache local
         const novoId = 'M' + Math.floor(Math.random() * 10000);
         listaMembros.unshift({
           ID_Filho: novoId,
@@ -1281,7 +1287,6 @@
       alert("Registro de membro salvo na sessão!");
     }
 
-    // Cria a Página Principal do Guia de Ervas Organizado por Tipo_preparo
     function buildErvasHome(data) {
       const container = document.getElementById('contentContainer');
       document.getElementById('chipsContainer').style.display = 'none';
@@ -1372,10 +1377,9 @@
         const categoria = item.Tipo_preparo || item.Tipo_Preparo || item.Classificacao || 'Ervas';
         const descricao = item.Indicacao_Uso || item.Indicacao || item.Para_Que_Serve || '';
         const imagem = getCleanImageUrl(item);
-        const acessoPublico = (item.Acesso_Publico || item.Acesso || item.Visibilidade || 'Sim').toLowerCase();
 
         if (!isLoggedIn) {
-          if (!acessoPublico.includes('sim') && !acessoPublico.includes('público') && !acessoPublico.includes('publico')) return;
+          if (!isPublicAccess(item)) return;
         }
 
         let imgContent = '';
@@ -1385,7 +1389,7 @@
           imgContent = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-leaf fa-2x"></i></div>`;
         }
 
-        const isRestricted = !acessoPublico.includes('sim') && !acessoPublico.includes('público') && !acessoPublico.includes('publico');
+        const isRestricted = !isPublicAccess(item);
         const restrictedBadge = isRestricted ? `<span class="card-badge-restricted"><i class="fa-solid fa-user-lock"></i> Exclusivo</span>` : '';
 
         card.innerHTML = `
@@ -1418,8 +1422,7 @@
 
       const accessibleData = data.filter(item => {
         if (!isLoggedIn) {
-          const acesso = (item.Acesso_Publico || item.Acesso || item.Visibilidade || 'Sim').toLowerCase();
-          if (!acesso.includes('sim') && !acesso.includes('público') && !acesso.includes('publico')) return false;
+          if (!isPublicAccess(item)) return false;
         }
         return true;
       });
@@ -1467,8 +1470,7 @@
 
       const visibleData = data.filter(item => {
         if (!isLoggedIn) {
-          const acesso = (item.Acesso_Publico || item.Acesso || item.Visibilidade || 'Sim').toLowerCase();
-          if (!acesso.includes('sim') && !acesso.includes('público') && !acesso.includes('publico')) return false;
+          if (!isPublicAccess(item)) return false;
         }
 
         if (selectedChip !== 'Todos') {
@@ -1514,7 +1516,6 @@
 
         const imagem = getCleanImageUrl(item);
         const videoUrl = getVideoUrlFromItem(item);
-        const acessoPublico = (item.Acesso_Publico || item.Acesso || item.Visibilidade || 'Sim').toLowerCase();
 
         let imgContent = '';
         if (imagem && tabName !== 'Pontos_Cantados') {
@@ -1524,7 +1525,7 @@
           imgContent = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${iconClass} fa-2x"></i></div>`;
         }
 
-        const isRestricted = !acessoPublico.includes('sim') && !acessoPublico.includes('público') && !acessoPublico.includes('publico');
+        const isRestricted = !isPublicAccess(item);
         const restrictedBadge = isRestricted ? `<span class="card-badge-restricted"><i class="fa-solid fa-user-lock"></i> Exclusivo</span>` : '';
 
         let datetimeContent = '';
