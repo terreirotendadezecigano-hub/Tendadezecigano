@@ -242,6 +242,91 @@
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
+    /* Estilos da Tabela de Membros */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .membros-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.8rem;
+    }
+
+    .membros-table th, .membros-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .membros-table th {
+      background-color: #1a1a1a;
+      color: var(--gold-primary);
+      font-weight: 600;
+    }
+
+    .membros-table tr:hover {
+      background-color: rgba(212, 175, 55, 0.05);
+    }
+
+    .btn-edit-membro {
+      background: var(--gold-primary);
+      color: #000;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.72rem;
+    }
+
+    .btn-add-membro {
+      background: var(--gold-primary);
+      color: #000;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--gold-light);
+      margin-bottom: 4px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 7px 10px;
+      background: #111;
+      border: 1px solid var(--border-color);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+
+    .form-control:focus {
+      border-color: var(--gold-primary);
+      outline: none;
+    }
+
     /* Estilos Específicos para a Página Principal do Guia de Ervas */
     .ervas-home-container {
       display: flex;
@@ -502,19 +587,21 @@
 </head>
 <body>
 
-  <!-- Menu Lateral Ajustado -->
+  <!-- Menu Lateral Ajustado com Item Membros para Dirigentes -->
   <aside class="sidebar" id="sidebar">
     <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 14px 12px 14px; border-bottom: 1px solid var(--border-color);">
       <span style="color:var(--gold-primary); font-weight:bold; font-size:0.9rem;">Navegação</span>
       <i class="fa-solid fa-xmark" style="color:#fff; cursor:pointer; font-size:1.2rem;" onclick="toggleSidebar()"></i>
     </div>
-    <ul class="nav-list">
+    <ul class="nav-list" id="navList">
       <li class="nav-item active" onclick="switchTab('Home', this)"><i class="fa-solid fa-house"></i> Início</li>
       <li class="nav-item" onclick="switchTab('Agenda', this)"><i class="fa-solid fa-calendar-days"></i> Agenda</li>
       <li class="nav-item" onclick="switchTab('Mural_Imagens', this)"><i class="fa-solid fa-photo-film"></i> Mural de Avisos</li>
       <li class="nav-item" onclick="switchTab('Pontos_Cantados', this)"><i class="fa-solid fa-music"></i> Pontos Cantados</li>
       <li class="nav-item" onclick="switchTab('Ervas_Banhos', this)"><i class="fa-solid fa-leaf"></i> Ervas & Banhos</li>
       <li class="nav-item" onclick="switchTab('Guias_Instrucoes', this)"><i class="fa-solid fa-book-open"></i> Orientações</li>
+      <!-- O menu de Membros é injetado via JS se o perfil for Dirigente -->
+      <li class="nav-item" id="menuMembros" style="display:none;" onclick="switchTab('Membros', this)"><i class="fa-solid fa-users"></i> Membros</li>
     </ul>
   </aside>
 
@@ -598,23 +685,81 @@
     </div>
   </div>
 
-  <!-- JavaScript com Nova Estrutura de Rotas e Guia de Ervas Organizado -->
+  <!-- Modal Cadastro/Edição de Membro -->
+  <div class="modal-overlay" id="modalMembro">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-header">
+        <h3 style="font-size:0.9rem; margin:0;" id="membroModalTitle"><i class="fa-solid fa-user-plus"></i> Cadastrar Membro</h3>
+        <button class="modal-close-icon" onclick="closeMembroModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="membroId">
+        <div class="form-group">
+          <label>Nome Completo</label>
+          <input type="text" id="membroNome" class="form-control" placeholder="Nome do filho(a)">
+        </div>
+        <div class="form-group">
+          <label>Cargo / Função</label>
+          <input type="text" id="membroCargo" class="form-control" placeholder="Ex: Filho(a) de Santo, Pai de Santo">
+        </div>
+        <div class="form-group">
+          <label>Telefone / WhatsApp</label>
+          <input type="text" id="membroTelefone" class="form-control" placeholder="(31) 99999-9999">
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="membroEmail" class="form-control" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Data de Nascimento</label>
+          <input type="date" id="membroDataNasc" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Orixá de Frente</label>
+          <input type="text" id="membroOrixa" class="form-control" placeholder="Ex: Ogum, Oxum">
+        </div>
+        <div class="form-group">
+          <label>Perfil de Acesso</label>
+          <select id="membroPerfil" class="form-control">
+            <option value="Membro">Membro</option>
+            <option value="Dirigente">Dirigente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="membroStatus" class="form-control">
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-submit" onclick="salvarMembro()">Salvar Membro</button>
+        <button class="btn-submit" style="background:#444; color:#fff;" onclick="closeMembroModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
     let currentTab = 'Home';
     let currentData = [];
+    let listaMembros = []; // Cache local da planilha de membros
     let isLoggedIn = false;
     let loggedUser = null;
     let selectedChip = 'Todos';
     let isErvasSubpage = false;
 
+    // =================================================================
+    // 1. FORÇA O INÍCIO SEMPRE DESLOGADO (REQUISITADO)
+    // =================================================================
+    localStorage.removeItem('zeCiganoUser');
+    sessionStorage.clear();
+    isLoggedIn = false;
+    loggedUser = null;
+
     window.onload = function() {
-      const savedUser = localStorage.getItem('zeCiganoUser');
-      if (savedUser) {
-        isLoggedIn = true;
-        loggedUser = JSON.parse(savedUser);
-        updateAuthUI();
-      }
+      updateAuthUI();
       loadGeneralData();
       loadTabData('Home');
     };
@@ -662,10 +807,16 @@
           'Mural_Imagens': '<i class="fa-solid fa-photo-film"></i> Mural de Avisos',
           'Pontos_Cantados': '<i class="fa-solid fa-music"></i> Pontos Cantados',
           'Ervas_Banhos': '<i class="fa-solid fa-leaf"></i> Guia Sagrado de Ervas & Banhos',
-          'Guias_Instrucoes': '<i class="fa-solid fa-book-open"></i> Orientações'
+          'Guias_Instrucoes': '<i class="fa-solid fa-book-open"></i> Orientações',
+          'Membros': '<i class="fa-solid fa-users"></i> Gestão de Membros'
         };
         document.getElementById('pageTitle').innerHTML = titles[tabName] || '<i class="fa-solid fa-folder"></i> Registros';
-        loadTabData(tabName);
+        
+        if (tabName === 'Membros') {
+          carregarEExibirMembros();
+        } else {
+          loadTabData(tabName);
+        }
       }
 
       document.getElementById('searchInput').value = '';
@@ -776,7 +927,7 @@
           document.getElementById('txtQuemSomos').innerHTML = enderecoHtml;
 
           const telefone = info.Telefone_Whatsapp || info.Telefone || '';
-          const grupoWhatsapp = info.Grupo_Whatsapp || info['Grupo Whatsapp'] || info.Grupo_WhatsApp || info['Grupo WhatsApp'] || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
+          const grupoWhatsapp = info.Grupo_Whatsapp || info['Grupo Whatsapp'] || info.Grupo_Zap || info.Grupo_WhatsApp || info['Grupo WhatsApp'] || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
           const instagram = info.Instagram || '';
           const facebook = info.Facebook || '';
           const horario = info.Horario_Giras || info.Horario || '';
@@ -798,7 +949,7 @@
             contatoHtml += `<li><a class="info-link" href="${instaUrl}" target="_blank"><i class="fa-brands fa-instagram"></i> <span>${instagram}</span></a></li>`;
           }
           if (facebook) {
-            let fbUrl = facebook.startsWith('http') ? facebook : `https://facebook.com/${facebook}`;
+            let fbUrl = facebook.startsWith('http') ? facebook : `https://facebook.com/${fbUrl}`;
             contatoHtml += `<li><a class="info-link" href="${fbUrl}" target="_blank"><i class="fa-brands fa-facebook"></i> <span>${facebook}</span></a></li>`;
           }
           if (horario) {
@@ -853,7 +1004,7 @@
       msgBox.innerText = 'Verificando...';
 
       try {
-        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/CADASTRO_FILHOS`);
+        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`);
         const membros = await res.json();
 
         const filho = membros.find(m => {
@@ -864,13 +1015,20 @@
         if (filho) {
           isLoggedIn = true;
           loggedUser = {
+            id: filho.ID_Filho || filho.id || '1',
             nome: filho.Nome_Completo || filho.Nome || 'Membro',
-            email: emailInput
+            email: emailInput,
+            perfil: filho.Perfil || 'Membro'
           };
-          localStorage.setItem('zeCiganoUser', JSON.stringify(loggedUser));
+
           updateAuthUI();
           closeLoginModal();
-          loadTabData(currentTab);
+
+          if (currentTab === 'Membros' && loggedUser.perfil !== 'Dirigente') {
+            switchTab('Home');
+          } else {
+            loadTabData(currentTab);
+          }
         } else {
           msgBox.innerText = 'E-mail não localizado no cadastro.';
         }
@@ -882,13 +1040,18 @@
     function logout() {
       isLoggedIn = false;
       loggedUser = null;
-      localStorage.removeItem('zeCiganoUser');
       updateAuthUI();
-      loadTabData(currentTab);
+      if (currentTab === 'Membros') {
+        switchTab('Home');
+      } else {
+        loadTabData(currentTab);
+      }
     }
 
     function updateAuthUI() {
       const container = document.getElementById('authContainer');
+      const menuMembros = document.getElementById('menuMembros');
+
       if (isLoggedIn && loggedUser) {
         container.innerHTML = `
           <div class="user-logged">
@@ -897,16 +1060,29 @@
             <i class="fa-solid fa-right-from-bracket" style="cursor:pointer; margin-left:4px;" onclick="logout()" title="Sair"></i>
           </div>
         `;
+
+        // Se o usuário for Dirigente, libera a opção Membros no menu
+        if (loggedUser.perfil === 'Dirigente') {
+          menuMembros.style.display = 'flex';
+        } else {
+          menuMembros.style.display = 'none';
+        }
       } else {
         container.innerHTML = `
           <button class="btn-login" onclick="openLoginModal()">
             <i class="fa-solid fa-lock"></i> <span>Membros</span>
           </button>
         `;
+        menuMembros.style.display = 'none';
       }
     }
 
     async function loadTabData(tabName) {
+      if (tabName === 'Membros') {
+        carregarEExibirMembros();
+        return;
+      }
+
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
       
@@ -933,12 +1109,183 @@
       }
     }
 
+    // =================================================================
+    // GESTÃO DE MEMBROS (EXCLUSIVA PARA PERFIL DIRIGENTE)
+    // =================================================================
+    async function carregarEExibirMembros() {
+      const loading = document.getElementById('loading');
+      const container = document.getElementById('contentContainer');
+      document.getElementById('chipsContainer').style.display = 'none';
+
+      loading.style.display = 'block';
+      container.innerHTML = '';
+
+      try {
+        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`);
+        listaMembros = await res.json();
+        currentData = listaMembros;
+        loading.style.display = 'none';
+        renderTabelaMembros(listaMembros);
+      } catch (e) {
+        loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar a lista de membros.';
+      }
+    }
+
+    function renderTabelaMembros(membros) {
+      const container = document.getElementById('contentContainer');
+      container.innerHTML = `
+        <button class="btn-add-membro" onclick="abrirModalNovoMembro()"><i class="fa-solid fa-plus"></i> Novo Membro</button>
+        <div class="table-responsive">
+          <table class="membros-table">
+            <thead>
+              <tr>
+                <th>Ações</th>
+                <th>Nome</th>
+                <th>Cargo/Função</th>
+                <th>Telefone</th>
+                <th>E-mail</th>
+                <th>Data Nasc.</th>
+                <th>Orixá</th>
+                <th>Perfil</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="membrosTableBody">
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      const tbody = document.getElementById('membrosTableBody');
+      if (!membros || membros.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
+        return;
+      }
+
+      membros.forEach(m => {
+        const id = m.ID_Filho || m.id || m.ID || '';
+        const nome = m.Nome_Completo || m.Nome || '';
+        const cargo = m.Cargo_Funcao || m.Cargo || '';
+        const tel = m.Telefone || '';
+        const email = m.Email || m['E-mail'] || '';
+        const dataNasc = formatDateBR(m.Data_Nascimento || m.dataNascimento || '');
+        const orixa = m.Orixa_Frente || m.orixaHead || '';
+        const perfil = m.Perfil || 'Membro';
+        const status = m.Status_Ativo || m.status || 'Ativo';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><button class="btn-edit-membro" onclick="editarMembro('${id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button></td>
+          <td><strong>${nome}</strong></td>
+          <td>${cargo}</td>
+          <td>${tel}</td>
+          <td>${email}</td>
+          <td>${dataNasc}</td>
+          <td>${orixa}</td>
+          <td><span class="card-badge">${perfil}</span></td>
+          <td><span class="card-badge" style="background:${status === 'Ativo' ? '#1e4620' : '#4d1e1e'}; color:#fff;">${status}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function abrirModalNovoMembro() {
+      document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Cadastrar Membro';
+      document.getElementById('membroId').value = '';
+      document.getElementById('membroNome').value = '';
+      document.getElementById('membroCargo').value = '';
+      document.getElementById('membroTelefone').value = '';
+      document.getElementById('membroEmail').value = '';
+      document.getElementById('membroDataNasc').value = '';
+      document.getElementById('membroOrixa').value = '';
+      document.getElementById('membroPerfil').value = 'Membro';
+      document.getElementById('membroStatus').value = 'Ativo';
+
+      document.getElementById('modalMembro').style.display = 'flex';
+    }
+
+    function editarMembro(idMembro) {
+      const m = listaMembros.find(item => String(item.ID_Filho || item.id || item.ID) === String(idMembro));
+
+      if (!m) {
+        alert("Membro não encontrado!");
+        return;
+      }
+
+      document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Editar Membro';
+      document.getElementById('membroId').value = m.ID_Filho || m.id || m.ID || '';
+      document.getElementById('membroNome').value = m.Nome_Completo || m.Nome || '';
+      document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
+      document.getElementById('membroTelefone').value = m.Telefone || '';
+      document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
+      document.getElementById('membroDataNasc').value = m.Data_Nascimento || m.dataNascimento || '';
+      document.getElementById('membroOrixa').value = m.Orixa_Frente || m.orixaHead || '';
+      document.getElementById('membroPerfil').value = m.Perfil || 'Membro';
+      document.getElementById('membroStatus').value = m.Status_Ativo || m.status || 'Ativo';
+
+      document.getElementById('modalMembro').style.display = 'flex';
+    }
+
+    function closeMembroModal() {
+      document.getElementById('modalMembro').style.display = 'none';
+    }
+
+    function salvarMembro() {
+      const id = document.getElementById('membroId').value;
+      const nome = document.getElementById('membroNome').value.trim();
+      const cargo = document.getElementById('membroCargo').value.trim();
+      const telefone = document.getElementById('membroTelefone').value.trim();
+      const email = document.getElementById('membroEmail').value.trim();
+      const dataNasc = document.getElementById('membroDataNasc').value;
+      const orixa = document.getElementById('membroOrixa').value.trim();
+      const perfil = document.getElementById('membroPerfil').value;
+      const status = document.getElementById('membroStatus').value;
+
+      if (!nome) {
+        alert("O nome é obrigatório!");
+        return;
+      }
+
+      if (id) {
+        // Atualiza membro existente no cache local
+        const index = listaMembros.findIndex(item => String(item.ID_Filho || item.id || item.ID) === String(id));
+        if (index !== -1) {
+          listaMembros[index].Nome_Completo = nome;
+          listaMembros[index].Cargo_Funcao = cargo;
+          listaMembros[index].Telefone = telefone;
+          listaMembros[index].Email = email;
+          listaMembros[index].Data_Nascimento = dataNasc;
+          listaMembros[index].Orixa_Frente = orixa;
+          listaMembros[index].Perfil = perfil;
+          listaMembros[index].Status_Ativo = status;
+        }
+      } else {
+        // Cadastra novo membro no cache local
+        const novoId = 'M' + Math.floor(Math.random() * 10000);
+        listaMembros.unshift({
+          ID_Filho: novoId,
+          Nome_Completo: nome,
+          Cargo_Funcao: cargo,
+          Telefone: telefone,
+          Email: email,
+          Data_Nascimento: dataNasc,
+          Orixa_Frente: orixa,
+          Perfil: perfil,
+          Status_Ativo: status
+        });
+      }
+
+      closeMembroModal();
+      currentData = listaMembros;
+      renderTabelaMembros(listaMembros);
+      alert("Registro de membro salvo na sessão!");
+    }
+
     // Cria a Página Principal do Guia de Ervas Organizado por Tipo_preparo
     function buildErvasHome(data) {
       const container = document.getElementById('contentContainer');
       document.getElementById('chipsContainer').style.display = 'none';
 
-      // Identifica dinamicamente o Tipo_preparo das ervas cadastradas na planilha
       const cats = new Set();
       data.forEach(item => {
         const cat = item.Tipo_preparo || item.Tipo_Preparo || item.Classificacao || item.Categoria || 'Banhos';
@@ -990,7 +1337,6 @@
         <div id="subpageGridContainer"></div>
       `;
 
-      // Filtra os dados da categoria selecionada (Tipo_preparo) e renderiza o Grid
       const filtered = currentData.filter(item => {
         const cat = item.Tipo_preparo || item.Tipo_Preparo || item.Classificacao || item.Categoria || '';
         return cat.trim().toLowerCase() === categoria.toLowerCase();
@@ -1065,7 +1411,7 @@
       const chipsContainer = document.getElementById('chipsContainer');
       chipsContainer.innerHTML = '';
 
-      if (!data || data.length === 0 || tabName === 'Home' || tabName === 'Ervas_Banhos') {
+      if (!data || data.length === 0 || tabName === 'Home' || tabName === 'Ervas_Banhos' || tabName === 'Membros') {
         chipsContainer.style.display = 'none';
         return;
       }
@@ -1109,6 +1455,7 @@
 
     function renderContent(data, tabName) {
       if (tabName === 'Ervas_Banhos' && !isErvasSubpage) return;
+      if (tabName === 'Membros') return;
 
       const container = document.getElementById('contentContainer');
       container.innerHTML = '';
@@ -1388,7 +1735,10 @@
           val && val.toString().toLowerCase().includes(query)
         );
       });
-      if (currentTab === 'Ervas_Banhos' && isErvasSubpage) {
+
+      if (currentTab === 'Membros') {
+        renderTabelaMembros(filtered);
+      } else if (currentTab === 'Ervas_Banhos' && isErvasSubpage) {
         renderErvasGrid(filtered);
       } else {
         renderContent(filtered, currentTab);
